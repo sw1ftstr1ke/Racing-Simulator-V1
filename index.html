@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101116">
+  <title>Slipstream — Arcade Racing</title>
+  <style>
+    :root{color-scheme:dark;--red:#ff293b;--ink:#f6f5f2;--muted:#a6a6af;--panel:#111218;--line:#393a44}
+    *{box-sizing:border-box}body{margin:0;background:#101116;color:var(--ink);font:500 16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
+    button,select{font:inherit;color:inherit}button{cursor:pointer}.topbar{height:64px;display:flex;align-items:center;padding:0 22px;background:#fff7e9;color:#30332f;letter-spacing:.12em;font-weight:900}
+    .brand{font-size:20px}.brand i{font-style:normal;color:var(--red)}
+    main{position:relative;min-height:calc(100vh - 64px);overflow:hidden;background:#9fc6dc}
+    canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+    .panel{position:relative;z-index:2;width:min(470px,calc(100% - 28px));margin:28px 0 30px 28px;padding:28px;border:1px solid #ffffff20;border-radius:22px;background:linear-gradient(145deg,rgba(16,17,23,.97),rgba(16,17,23,.86));box-shadow:0 20px 70px #0007;backdrop-filter:blur(8px)}
+    h1{font-size:clamp(34px,6vw,54px);line-height:1;margin:4px 0 16px;font-weight:1000;font-style:italic;letter-spacing:-.06em}h1 i{font-style:inherit;color:var(--red)}
+    .intro{color:#b4b4bd;font-size:17px;font-weight:700;margin:0 0 24px}.label{display:block;color:#777983;font-size:12px;font-weight:900;letter-spacing:.17em;text-transform:uppercase;margin:16px 0 7px}
+    input,select{width:100%;padding:13px 15px;border:1px solid #454650;border-radius:12px;background:#202128;color:#fff;outline:none}input:focus,select:focus{border-color:#999}
+    .primary,.secondary{width:100%;border:0;border-radius:13px;padding:15px 16px;font-size:19px;font-weight:950;margin-top:12px;background:var(--red);box-shadow:0 8px 22px #ff293b33}.secondary{background:#24252c;border:1px solid #454650;box-shadow:none;font-size:16px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.help{font-size:13px;color:#a6a6af;margin:10px 0 0}.controls{border-top:1px solid #ffffff1a;margin-top:18px;padding-top:13px;color:#aaaab3;font-size:13px;display:grid;grid-template-columns:auto 1fr;gap:5px 12px}.key{color:white;background:#292a33;border-radius:6px;padding:2px 7px;font-weight:800;justify-self:start}
+    .hud{position:absolute;z-index:3;top:18px;right:18px;display:none;gap:10px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 36px)}.hud.on{display:flex}.pill{background:#111218e8;border:1px solid #ffffff2c;border-radius:12px;padding:9px 13px;min-width:90px;text-align:center;font-weight:900}.pill small{display:block;color:#aaa;font-size:10px;letter-spacing:.12em}
+    .message{position:absolute;z-index:3;top:40%;left:50%;transform:translate(-50%,-50%);font-size:clamp(42px,8vw,90px);font-weight:1000;font-style:italic;text-shadow:0 4px 20px #0009;pointer-events:none;display:none}.message.on{display:block}
+    .mobile{position:absolute;z-index:4;bottom:18px;left:50%;transform:translateX(-50%);display:none;gap:12px}.mobile button{width:60px;height:60px;border:1px solid #fff5;border-radius:50%;background:#101116bb;font-size:22px;font-weight:900;touch-action:none}
+    @media(max-width:700px){.topbar{height:54px}.panel{margin:14px auto;padding:20px}.intro{font-size:15px}main{min-height:calc(100vh - 54px)}.mobile.show{display:flex}.hud{top:8px;right:8px;gap:5px}.pill{min-width:65px;padding:6px 8px;font-size:13px}.pill small{font-size:9px}}
+  </style>
+</head>
+<body>
+  <header class="topbar"><div class="brand">SLIP<i>STREAM</i></div></header>
+  <main id="stage">
+    <canvas id="game" aria-label="Arcade racing game"></canvas>
+    <section class="panel" id="menu">
+      <h1>SLIP<i>STREAM</i></h1>
+      <p class="intro">Pick a seat, wait for the lights, and race. A fast, original browser racer inspired by classic arcade driving games.</p>
+      <label class="label" for="driver">Driver name</label><input id="driver" maxlength="18" value="Driver" autocomplete="nickname">
+      <button class="primary" id="quick">Quick race</button>
+      <div class="row"><div><label class="label" for="track">Track</label><select id="track"><option value="0">Alpine Run</option><option value="1">Desert Ring</option><option value="2">Coastal Sprint</option></select></div><div><label class="label" for="laps">Laps</label><select id="laps"><option>3</option><option>5</option><option>10</option></select></div></div>
+      <div class="row"><div><label class="label" for="bots">Rivals</label><select id="bots"><option value="3">3 rivals</option><option value="5" selected>5 rivals</option><option value="8">8 rivals</option></select></div><div><label class="label" for="skill">Difficulty</label><select id="skill"><option value=".72">Easy</option><option value=".87" selected>Normal</option><option value="1">Hard</option></select></div></div>
+      <button class="secondary" id="practice">Practice drive</button>
+      <div class="controls"><span class="key">W / ↑</span><span>Throttle</span><span class="key">S / ↓</span><span>Brake</span><span class="key">A D / ← →</span><span>Steer</span><span class="key">Space</span><span>Boost</span><span class="key">P / Esc</span><span>Pause or return to menu</span></div>
+    </section>
+    <div class="hud" id="hud"><div class="pill"><small>SPEED</small><span id="speed">0</span> km/h</div><div class="pill"><small>LAP</small><span id="lap">1 / 3</span></div><div class="pill"><small>POSITION</small><span id="place">1 / 6</span></div><div class="pill"><small>TIME</small><span id="time">0:00.0</span></div><div class="pill"><small>BOOST</small><span id="boost">100%</span></div></div>
+    <div class="message" id="message"></div>
+    <div class="mobile" id="mobile"><button data-key="left" aria-label="Steer left">◀</button><button data-key="brake" aria-label="Brake">▼</button><button data-key="boost" aria-label="Boost">⚡</button><button data-key="right" aria-label="Steer right">▶</button><button data-key="gas" aria-label="Accelerate">▲</button></div>
+  </main>
+<script>
+(function(){
+  'use strict';
+  const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),stage=document.getElementById('stage');
+  const menu=document.getElementById('menu'),hud=document.getElementById('hud'),message=document.getElementById('message'),mobile=document.getElementById('mobile');
+  const input={left:false,right:false,gas:false,brake:false,boost:false};
+  const tracks=[{name:'Alpine Run',sky1:'#70b4d7',sky2:'#e7d5b9',ground:'#61a65a',curve:.35},{name:'Desert Ring',sky1:'#e38b5d',sky2:'#f3d09b',ground:'#b68b49',curve:-.48},{name:'Coastal Sprint',sky1:'#67b7d4',sky2:'#d8ebdc',ground:'#63ae71',curve:.18}];
+  const colors=['#ff293b','#34c7ff','#ffc247','#a57aff','#70e09b','#f2f2f2','#ff7a36','#ec72bc'];
+  let W=0,H=0,dpr=1,state='menu',last=0,elapsed=0,speed=0,playerX=0,distance=0,boost=100,totalLaps=3,track=tracks[0],targetCurve=0,curve=0,opponents=[],countdown=0,finishAt=0,practice=false;
+  const segments=180,roadWidth=2000,drawDistance=1500;
+  function resize(){const r=stage.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0)}
+  addEventListener('resize',resize);resize();
+  function start(isPractice){practice=isPractice;menu.style.display='none';hud.classList.add('on');mobile.classList.add('show');state='countdown';elapsed=0;distance=0;speed=0;playerX=0;boost=100;countdown=3.5;totalLaps=Number(document.getElementById('laps').value);track=tracks[Number(document.getElementById('track').value)];targetCurve=track.curve;opponents=[];
+    const n=isPractice?0:Number(document.getElementById('bots').value);for(let i=0;i<n;i++)opponents.push({z:80+i*94,x:(i%2?-.52:.52),speed:(.68+Math.random()*.16)*Number(document.getElementById('skill').value),color:colors[(i+1)%colors.length],name:['NOVA','APEX','MICA','KITE','RUSH','VOLT','JUNO','ACE'][i]});
+    document.getElementById('lap').textContent='1 / '+(isPractice?'∞':totalLaps);document.getElementById('place').textContent='1 / '+(n+1);message.classList.add('on');message.textContent='3';last=performance.now();requestAnimationFrame(frame)}
+  function stop(){state='menu';menu.style.display='block';hud.classList.remove('on');mobile.classList.remove('show');message.classList.remove('on');speed=0}
+  document.getElementById('quick').onclick=()=>start(false);document.getElementById('practice').onclick=()=>start(true);
+  function key(e,on){const k=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k))e.preventDefault();if(k==='a'||k==='arrowleft')input.left=on;if(k==='d'||k==='arrowright')input.right=on;if(k==='w'||k==='arrowup')input.gas=on;if(k==='s'||k==='arrowdown')input.brake=on;if(k===' ')input.boost=on;if(on&&(k==='p'||k==='escape')){if(state==='race'){state='paused';message.textContent='PAUSED';message.classList.add('on')}else if(state==='paused'){state='race';message.classList.remove('on');last=performance.now()}else if(state==='finished')stop()}}
+  addEventListener('keydown',e=>key(e,true));addEventListener('keyup',e=>key(e,false));
+  document.querySelectorAll('.mobile button').forEach(b=>{const k=b.dataset.key;const down=e=>{e.preventDefault();input[k==='left'?'left':k==='right'?'right':k==='gas'?'gas':k==='brake'?'brake':'boost']=true};const up=e=>{e.preventDefault();input[k==='left'?'left':k==='right'?'right':k==='gas'?'gas':k==='brake'?'brake':'boost']=false};b.addEventListener('pointerdown',down);b.addEventListener('pointerup',up);b.addEventListener('pointerleave',up);b.addEventListener('pointercancel',up)});
+  function poly(points,color){ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.closePath();ctx.fill()}
+  function road(){const horizon=H*.43;const sky=ctx.createLinearGradient(0,0,0,horizon);sky.addColorStop(0,track.sky1);sky.addColorStop(1,track.sky2);ctx.fillStyle=sky;ctx.fillRect(0,0,W,horizon);
+    // Simple distant peaks and trackside silhouettes.
+    ctx.fillStyle='#ffffff45';ctx.beginPath();ctx.moveTo(0,horizon);for(let x=0;x<=W+100;x+=100)ctx.lineTo(x,horizon-35-Math.sin(x*.012)*25-Math.cos(x*.023)*20);ctx.lineTo(W,horizon);ctx.fill();
+    ctx.fillStyle=track.ground;ctx.fillRect(0,horizon,W,H-horizon);
+    const horizonY=horizon, bottom=H, center=W/2, travel=distance*.00075;
+    for(let i=segments;i>0;i--){const z1=i/segments,z2=(i-1)/segments;const y1=horizonY+(1-z1)*(1-z1)*(bottom-horizonY),y2=horizonY+(1-z2)*(1-z2)*(bottom-horizonY);const scale1=z1*z1,scale2=z2*z2;const bend=Math.sin(travel+z1*2.7)*track.curve;const bend2=Math.sin(travel+z2*2.7)*track.curve;const c1=center+bend*W*.55,c2=center+bend2*W*.55;const rw1=scale1*W*.58+W*.025,rw2=scale2*W*.58+W*.025;const stripe=(Math.floor((distance*.018+i)/3)%2)===0;
+      poly([[0,y1],[W,y1],[W,y2],[0,y2]],stripe?track.ground:'#599e55');
+      poly([[c1-rw1*1.08,y1],[c1+rw1*1.08,y1],[c2+rw2*1.08,y2],[c2-rw2*1.08,y2]],stripe?'#eee':'#d73343');
+      poly([[c1-rw1,y1],[c1+rw1,y1],[c2+rw2,y2],[c2-rw2,y2]],stripe?'#34363d':'#303238');
+      if(Math.floor((distance*.01+i)/5)%2===0){for(let lane=1;lane<3;lane++){const lx1=c1-rw1+rw1*2*lane/3,lx2=c2-rw2+rw2*2*lane/3;poly([[lx1-scale1*3,y1],[lx1+scale1*3,y1],[lx2+scale2*3,y2],[lx2-scale2*3,y2]],'#ffffffb0')}}
+      // Starting line and occasional trackside boards.
+      if((Math.floor((distance/roadWidth)+i)%(segments*2))===0&&i<6){for(let q=0;q<12;q++){const bw=rw2/6;ctx.fillStyle=q%2?'#fff':'#18191d';ctx.fillRect(c2-rw2+q*bw,y2-5*scale2,bw,5*scale2)}}
+    }
+    // Roadside trees/flags scale toward the horizon.
+    for(let j=0;j<20;j++){const z=((j/20+travel*.08)%1);const y=horizon+(z*z)*(H-horizon);const x=(j%2?W*.04:W*.96)+Math.sin(j*12+travel)*W*.03;const size=5+z*28;ctx.fillStyle=j%3?'#23764b':'#26704a';ctx.beginPath();ctx.moveTo(x,y-size);ctx.lineTo(x-size*.6,y+size*.25);ctx.lineTo(x+size*.6,y+size*.25);ctx.fill();ctx.fillStyle='#70583d';ctx.fillRect(x-2,y+size*.2,4,size*.35)}
+  }
+  function car(x,y,w,h,color,player){ctx.save();ctx.translate(x,y);ctx.fillStyle='#0008';ctx.beginPath();ctx.ellipse(0,h*.4,w*.7,h*.2,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#15161b';ctx.fillRect(-w*.54,-h*.1,w*.22,h*.43);ctx.fillRect(w*.32,-h*.1,w*.22,h*.43);ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(-w*.5,h*.35);ctx.lineTo(-w*.43,-h*.22);ctx.lineTo(-w*.25,-h*.48);ctx.lineTo(w*.25,-h*.48);ctx.lineTo(w*.43,-h*.22);ctx.lineTo(w*.5,h*.35);ctx.closePath();ctx.fill();ctx.fillStyle=player?'#bceaff':'#b2d8e8';ctx.beginPath();ctx.moveTo(-w*.25,-h*.2);ctx.lineTo(-w*.16,-h*.4);ctx.lineTo(w*.16,-h*.4);ctx.lineTo(w*.25,-h*.2);ctx.closePath();ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(-w*.4,h*.1,w*.18,h*.06);ctx.fillRect(w*.22,h*.1,w*.18,h*.06);ctx.fillStyle='#ff2539';ctx.fillRect(-w*.39,h*.27,w*.15,h*.07);ctx.fillRect(w*.24,h*.27,w*.15,h*.07);if(player){ctx.fillStyle='#fff';ctx.fillRect(-w*.08,-h*.15,w*.16,h*.08)}ctx.restore()}
+  function drawOpponents(){const horizon=H*.43;for(const o of opponents){const z=((o.z-distance+drawDistance*4)%(drawDistance*4));const p=1-z/(drawDistance*4);if(p<.06||p>.96)continue;const y=horizon+p*p*(H-horizon);const bend=Math.sin(distance*.00075+p*2.7)*track.curve;const x=W/2+bend*W*.55+o.x*(W*.58*p*p+W*.025);const w=Math.max(9,W*.085*p),h=w*.62;car(x,y,w,h,o.color,false)}}
+  function update(dt){if(state==='countdown'){countdown-=dt;if(countdown>0)message.textContent=String(Math.ceil(countdown));else{state='race';message.textContent='GO!';setTimeout(()=>{if(state==='race')message.classList.remove('on')},650)}}if(state!=='race')return;
+    elapsed+=dt;const max=520;const usingBoost=input.boost&&boost>0&&speed>80;if(input.gas)speed+=230*dt;else speed-=65*dt;if(input.brake)speed-=330*dt;if(usingBoost){speed+=250*dt;boost-=32*dt}else boost=Math.min(100,boost+8*dt);speed=Math.max(0,Math.min(max,speed));const steer=(input.right?1:0)-(input.left?1:0);playerX+=steer*dt*(.85+speed/250);playerX*=1-.15*dt;playerX=Math.max(-1.5,Math.min(1.5,playerX));distance+=speed*dt*1.3;const lap=Math.floor(distance/6000)+1;document.getElementById('lap').textContent=(practice?'∞':Math.min(lap,totalLaps)+' / '+totalLaps);document.getElementById('speed').textContent=Math.round(speed);document.getElementById('time').textContent=(Math.floor(elapsed/60))+':'+String(Math.floor(elapsed%60)).padStart(2,'0')+'.'+Math.floor((elapsed%1)*10);document.getElementById('boost').textContent=Math.round(boost)+'%';
+    let place=1;for(const o of opponents){o.z-=speed*dt*.2;o.z+=o.speed*dt*125;if(o.z<0)o.z+=drawDistance*4;if(Math.abs(o.x-playerX)<.22&&o.z<75&&o.z>15){speed*=.94}}document.getElementById('place').textContent=place+' / '+(opponents.length+1);
+    if(!practice&&lap>totalLaps){state='finished';finishAt=elapsed;message.textContent='FINISH!';message.classList.add('on');setTimeout(()=>{if(state==='finished'){message.textContent='FINISH!  '+document.getElementById('driver').value+' — '+document.getElementById('time').textContent+'  ·  Press P for menu'}} ,100)}
+  }
+  function frame(now){if(state==='menu'||state==='finished'||state==='paused')return;const dt=Math.min(.04,(now-last)/1000||0);last=now;update(dt);road();drawOpponents();const carW=Math.min(82,W*.09),carH=carW*.62;const x=W/2+playerX*W*.3;car(x,H*.83,carW,carH,'#ff293b',true);if(state==='countdown')message.classList.add('on');requestAnimationFrame(frame)}
+  // Render the scenery before the player starts.
+  track=tracks[0];road();car(W/2,H*.83,Math.min(82,W*.09),Math.min(51,W*.056),'#ff293b',true);
+})();
+</script>
+</body>
+</html>
